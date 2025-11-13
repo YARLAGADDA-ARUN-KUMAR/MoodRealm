@@ -1,11 +1,11 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();
@@ -21,6 +21,7 @@ app.use(morgan("dev"));
 app.use(cors(corsOptions));
 
 app.use("/api/users", userRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get("/", (req, res) => {
     res.json({ message: "Mood Realm API is running!" });
