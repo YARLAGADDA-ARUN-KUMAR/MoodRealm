@@ -28,6 +28,21 @@ const postSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        mood: {
+            type: String,
+            enum: [
+                "quote",
+                "pickup lines",
+                "romantic",
+                "heart broken",
+                "lonely",
+                "creative",
+                "motivation",
+                "funny",
+                "neutral",
+            ],
+            default: "neutral",
+        },
         image: {
             type: String,
         },
