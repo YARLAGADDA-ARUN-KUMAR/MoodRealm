@@ -6,10 +6,15 @@ const getAllPosts = asyncHandler(async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = 10;
     const mood = req.query.mood;
+    const contentType = req.query.contentType;
 
     let filter = {};
     if (mood && mood !== "all") {
         filter.mood = mood;
+    }
+
+    if (contentType) {
+        filter.contentType = contentType;
     }
 
     const posts = await Post.find(filter)
@@ -42,13 +47,22 @@ const getUserPosts = asyncHandler(async (req, res) => {
 });
 
 const createPost = asyncHandler(async (req, res) => {
-    const { content, image, mood } = req.body;
+    const { content, mood, contentType, backgroundImage, backgroundStyle } =
+        req.body;
+
+    if (!content || !mood || !contentType) {
+        return res
+            .status(400)
+            .json({ message: "Content, mood, and contentType are required" });
+    }
 
     const post = await Post.create({
         user: req.user._id,
         content,
-        image: image || null,
-        mood: mood || "neutral",
+        mood,
+        contentType,
+        backgroundImage: backgroundImage || null,
+        backgroundStyle: backgroundStyle || null,
     });
 
     res.status(201).json(post);

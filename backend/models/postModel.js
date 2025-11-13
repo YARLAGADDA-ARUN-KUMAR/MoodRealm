@@ -31,20 +31,41 @@ const postSchema = new mongoose.Schema(
         mood: {
             type: String,
             enum: [
-                "quote",
-                "pickup lines",
-                "romantic",
-                "heart broken",
-                "lonely",
-                "creative",
-                "motivation",
-                "funny",
-                "neutral",
+                "Inspired",
+                "Joyful",
+                "Grateful",
+                "Romantic",
+                "Heartbroken",
+                "Lonely",
+                "Creative",
+                "Motivated",
+                "Anxious",
+                "Funny",
+                "Neutral",
             ],
-            default: "neutral",
+            default: "Neutral",
+            required: true,
         },
-        image: {
+        contentType: {
             type: String,
+            enum: [
+                "Quote",
+                "Life Lesson",
+                "Story",
+                "Flirty Line",
+                "Poem",
+                "Thought",
+            ],
+            default: "Thought",
+            required: true,
+        },
+        backgroundImage: {
+            type: String,
+            default: null,
+        },
+        backgroundStyle: {
+            type: String,
+            default: null,
         },
         likes: [
             {
