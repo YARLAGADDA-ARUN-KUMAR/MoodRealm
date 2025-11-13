@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
+import storyRoutes from "./routes/storyRoutes.js";
 
 connectDB();
 
@@ -24,6 +25,7 @@ app.use(cors(corsOptions));
 app.use("/api/users", userRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/stories", storyRoutes);
 
 app.get("/", (req, res) => {
     res.json({ message: "Mood Realm API is running!" });
