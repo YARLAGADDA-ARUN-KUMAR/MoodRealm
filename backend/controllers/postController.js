@@ -84,10 +84,6 @@ const getUserPosts = asyncHandler(async (req, res) => {
 const createPost = asyncHandler(async (req, res) => {
     const { content, mood, contentType, backgroundImage, backgroundStyle } = req.body;
 
-    if (!content || !mood || !contentType) {
-        return res.status(400).json({ message: 'Content, mood, and contentType are required' });
-    }
-
     const post = await Post.create({
         user: req.user._id,
         content,
@@ -138,10 +134,6 @@ const toggleLike = asyncHandler(async (req, res) => {
 
 const addComment = asyncHandler(async (req, res) => {
     const { text } = req.body;
-
-    if (!text || text.trim() === '') {
-        return res.status(400).json({ message: 'Comment text is required' });
-    }
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return res.status(400).json({ message: 'Invalid post ID' });

@@ -1,25 +1,26 @@
-import express from "express";
-import protect from "../middleware/authMiddleware.js";
+import express from 'express';
 import {
-    getAllPosts,
-    getUserPosts,
+    addComment,
     createPost,
     deletePost,
+    getAllPosts,
+    getUserPosts,
     toggleLike,
-    addComment,
     togglereport,
-} from "../controllers/postController.js";
+} from '../controllers/postController.js';
+import protect from '../middleware/authMiddleware.js';
+import { addCommentRules, createPostRules, validate } from '../middleware/validationMiddleware.js';
 
 const postRoutes = express.Router();
 
-postRoutes.route("/").get(getAllPosts).post(protect, createPost);
+postRoutes.route('/').get(getAllPosts).post(protect, createPostRules(), validate, createPost);
 
-postRoutes.get("/user/:id", getUserPosts);
+postRoutes.get('/user/:id', getUserPosts);
 
-postRoutes.route("/:id").delete(protect, deletePost);
+postRoutes.route('/:id').delete(protect, deletePost);
 
-postRoutes.post("/:id/like", protect, toggleLike);
-postRoutes.post("/:id/report", protect, togglereport);
-postRoutes.post("/:id/comment", protect, addComment);
+postRoutes.post('/:id/like', protect, toggleLike);
+postRoutes.post('/:id/report', protect, togglereport);
+postRoutes.post('/:id/comment', protect, addCommentRules(), validate, addComment);
 
 export default postRoutes;
