@@ -85,4 +85,4 @@ const generateQuote = asyncHandler(async (req, res) => {
     res.json({ quote: text });
 });
 
-export { chatWithAI, generateBackgroundImage, generateInspirationalContent, generateQuote };
+export { chatWithAI, generateInspirationalContent, generateQuote };
