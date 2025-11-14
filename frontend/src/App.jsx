@@ -1,5 +1,3 @@
-// D:\MoodRealm\frontend\src\App.jsx
-
 import { Route, Routes } from 'react-router-dom';
 import './App.css';
 import AuthenticatedNav from './components/AuthenticatedNav';
@@ -18,7 +16,7 @@ function App() {
     const { user } = useAuth();
 
     return (
-        <div className="min-h-screen bg-[#0a0e27]">
+        <div className="min-h-screen bg-[#0a0e27] pb-16 md:pb-0">
             {user ? <AuthenticatedNav /> : <UnAuthenticatedNav />}
 
             <Routes>

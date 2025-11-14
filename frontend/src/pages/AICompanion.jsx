@@ -70,7 +70,7 @@ const AICompanion = () => {
             });
 
             const aiMessage = {
-                role: 'assistant',
+                role: 'model', // FIX: Was 'assistant', backend expects 'model'
                 content: data.reply,
                 timestamp: new Date().toISOString(),
             };
@@ -80,7 +80,7 @@ const AICompanion = () => {
             console.error('Error sending message:', error);
 
             const errorMessage = {
-                role: 'assistant',
+                role: 'model', // FIX: Was 'assistant'
                 content:
                     "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
                 timestamp: new Date().toISOString(),
@@ -105,7 +105,7 @@ const AICompanion = () => {
 
             const clearedConversation = [
                 {
-                    role: 'assistant',
+                    role: 'model', // FIX: Was 'assistant'
                     content: "Hello! I'm your AI companion. How can I support you today?",
                     timestamp: new Date().toISOString(),
                 },
@@ -141,8 +141,10 @@ const AICompanion = () => {
                 isLoading={isClearing}
             />
 
-            <div className="min-h-screen bg-[#0a0e27] flex flex-col">
-                <div className="bg-linear-to-r from-purple-600 to-pink-600 py-1 sticky top-16 z-40">
+            {/* FIX: Changed min-h-screen to h-[calc(100svh-64px)] to fit content below sticky nav */}
+            <div className="h-[calc(100svh-64px)] bg-[#0a0e27] flex flex-col">
+                {/* This header is sticky *within* this component, below the main nav */}
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 py-4 sticky top-16 z-40">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
@@ -150,8 +152,10 @@ const AICompanion = () => {
                                     <Sparkles className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white">AI Companion</h1>
-                                    <p className="text-white/80 text-sm">
+                                    <h1 className="text-xl sm:text-2xl font-bold text-white">
+                                        AI Companion
+                                    </h1>
+                                    <p className="text-white/80 text-xs sm:text-sm">
                                         Your supportive friend, always here to listen
                                     </p>
                                 </div>

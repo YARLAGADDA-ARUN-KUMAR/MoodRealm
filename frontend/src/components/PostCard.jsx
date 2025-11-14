@@ -90,7 +90,7 @@ const PostCard = ({ post, onUpdate }) => {
                 <div
                     className={`relative rounded-2xl p-8 bg-gradient-to-br ${getMoodColor(
                         post.mood,
-                    )} h-[350px] flex flex-col overflow-hidden`}
+                    )} min-h-[350px] max-h-[350px] flex flex-col overflow-hidden`}
                     style={
                         post.backgroundImage
                             ? {
@@ -115,12 +115,12 @@ const PostCard = ({ post, onUpdate }) => {
                         <div
                             ref={contentRef}
                             className={`w-full flex-1 px-1 min-h-0
-            ${
-                isScrollable
-                    ? 'overflow-y-auto flex items-start'
-                    : 'flex items-center justify-center'
-            }
-        `}
+                                ${
+                                    isScrollable
+                                        ? 'overflow-y-auto flex items-start'
+                                        : 'flex items-center justify-center'
+                                }
+                            `}
                         >
                             <p className="text-white text-xl md:text-2xl font-serif leading-relaxed whitespace-pre-wrap">
                                 {post.content}

@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             setToken(data.token);
             localStorage.setItem('moodRealmUser', JSON.stringify(data));
+            localStorage.setItem('moodRealmToken', data.token); // BUG FIX: Persist token
             api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             return { success: true };
         } catch (error) {
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             setToken(data.token);
             localStorage.setItem('moodRealmUser', JSON.stringify(data));
+            localStorage.setItem('moodRealmToken', data.token); // BUG FIX: Persist token
             api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             return { success: true };
         } catch (error) {

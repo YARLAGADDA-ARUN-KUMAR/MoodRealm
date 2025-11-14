@@ -27,21 +27,24 @@ const MoodFilter = ({ selectedMood, onMoodChange }) => {
     ];
 
     return (
-        <div className="mb-8 sticky top-20 z-40 bg-[#0a0e27] py-4 border-b border-gray-800">
+        // Removed sticky classes, made component part of the scroll flow
+        <div className="mb-8 bg-[#0a0e27] pt-4 border-b border-gray-800">
             <h2 className="text-white text-xl font-semibold mb-4 text-center">
                 How are you feeling?
             </h2>
-            <div className="flex flex-wrap justify-center gap-3">
-                {moods.map((mood) => {
-                    const Icon = mood.icon;
-                    const isSelected = selectedMood === mood.name;
+            {/* Added wrapper for horizontal scrolling on mobile */}
+            <div className="overflow-x-auto pb-4">
+                <div className="inline-flex space-x-3 px-4 sm:px-0 sm:justify-center sm:w-full">
+                    {moods.map((mood) => {
+                        const Icon = mood.icon;
+                        const isSelected = selectedMood === mood.name;
 
-                    return (
-                        <button
-                            key={mood.name}
-                            onClick={() => onMoodChange(mood.name)}
-                            className={`
-                                flex items-center space-x-2 px-4 py-2 rounded-full
+                        return (
+                            <button
+                                key={mood.name}
+                                onClick={() => onMoodChange(mood.name)}
+                                className={`
+                                flex-shrink-0 flex items-center space-x-2 px-4 py-2 rounded-full
                                 transition-all duration-200 font-medium
                                 ${
                                     isSelected
@@ -49,12 +52,13 @@ const MoodFilter = ({ selectedMood, onMoodChange }) => {
                                         : 'bg-[#1a1f3a] text-gray-400 hover:bg-[#252a47] hover:text-white'
                                 }
                             `}
-                        >
-                            <Icon className="w-4 h-4" />
-                            <span>{mood.name}</span>
-                        </button>
-                    );
-                })}
+                            >
+                                <Icon className="w-4 h-4" />
+                                <span>{mood.name}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
