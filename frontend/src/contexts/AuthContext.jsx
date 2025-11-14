@@ -10,18 +10,24 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('moodRealmToken', token);
-            const userData = localStorage.getItem('moodRealmUser');
-            if (userData) {
-                setUser(JSON.parse(userData));
+        const fetchUserProfile = async () => {
+            if (token) {
+                try {
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                    const { data } = await api.get('/users/profile');
+                    setUser(data);
+
+                    localStorage.setItem('moodRealmUser', JSON.stringify(data));
+                } catch (error) {
+                    console.error('Auth fetch error:', error);
+                    logout();
+                }
             }
-        } else {
-            localStorage.removeItem('moodRealmToken');
-            localStorage.removeItem('moodRealmUser');
-            setUser(null);
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+
+        fetchUserProfile();
     }, [token]);
 
     const login = async (email, password) => {
@@ -30,6 +36,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             setToken(data.token);
             localStorage.setItem('moodRealmUser', JSON.stringify(data));
+            api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             return { success: true };
         } catch (error) {
             console.error('Login failed', error.response?.data?.message || error.message);
@@ -46,6 +53,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             setToken(data.token);
             localStorage.setItem('moodRealmUser', JSON.stringify(data));
+            api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             return { success: true };
         } catch (error) {
             console.error('Signup failed', error.response?.data?.message || error.message);
@@ -61,6 +69,7 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
         localStorage.removeItem('moodRealmToken');
         localStorage.removeItem('moodRealmUser');
+        delete api.defaults.headers.common['Authorization'];
     };
 
     return (

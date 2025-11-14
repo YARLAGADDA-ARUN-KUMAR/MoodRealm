@@ -1,84 +1,36 @@
 import MoodFilter from '@/components/MoodFilter';
 import PostCard from '@/components/PostCard';
-import api from '@/services/apiService';
+import usePosts from '@/hooks/usePosts';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 const sortOptions = [
+    { label: 'All', value: 'random' },
     { label: 'Latest', value: 'latest' },
     { label: 'Most Liked', value: 'likes' },
     { label: 'Most Commented', value: 'comments' },
-    { label: 'Shuffle', value: 'random' },
 ];
 
 const Home = () => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedMood, setSelectedMood] = useState('All');
-    const [sortOption, setSortOption] = useState('latest');
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-
-    const fetchPosts = async (moodFilter = 'All', pageNum = 1, sortValue = sortOption) => {
-        try {
-            setLoading(true);
-            const moodParam = moodFilter === 'All' ? 'all' : moodFilter;
-            const { data } = await api.get(
-                `/posts?mood=${moodParam}&page=${pageNum}&sort=${sortValue}`,
-            );
-
-            if (pageNum === 1) {
-                setPosts(data);
-            } else {
-                setPosts((prev) => [...prev, ...data]);
-            }
-
-            if (sortValue === 'random') {
-                setHasMore(false);
-            } else {
-                setHasMore(data.length === 10);
-            }
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchPosts(selectedMood, 1, sortOption);
-        setPage(1);
-    }, [selectedMood, sortOption]);
-
-    const handleMoodChange = (mood) => {
-        setSelectedMood(mood);
-        setPage(1);
-    };
+    const {
+        posts,
+        loading,
+        page,
+        hasMore,
+        sortOption,
+        setSortOption,
+        mood,
+        setMood,
+        loadMore,
+        refreshPosts,
+    } = usePosts('/posts', 'random', 'All'); // default = random (All)
 
     const handleSortChange = (event) => {
         setSortOption(event.target.value);
-        setPage(1);
-    };
-
-    const loadMore = () => {
-        if (sortOption === 'random' || !hasMore || loading) return;
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchPosts(selectedMood, nextPage, sortOption);
-    };
-
-    const handlePostUpdate = () => {
-        fetchPosts(selectedMood, 1, sortOption);
-        setPage(1);
-    };
-
-    const handleShuffle = () => {
-        fetchPosts(selectedMood, 1, 'random');
     };
 
     return (
         <div className="min-h-screen bg-[#0a0e27]">
-            <MoodFilter selectedMood={selectedMood} onMoodChange={handleMoodChange} />
+            <MoodFilter selectedMood={mood} onMoodChange={setMood} />
 
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -95,16 +47,6 @@ const Home = () => {
                                 </option>
                             ))}
                         </select>
-                        {sortOption === 'random' && (
-                            <button
-                                type="button"
-                                onClick={handleShuffle}
-                                className="px-4 py-2 bg-[#ec4899] hover:bg-[#d63384] text-white rounded-lg transition"
-                                disabled={loading}
-                            >
-                                Shuffle Again
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -121,7 +63,7 @@ const Home = () => {
                 ) : (
                     <>
                         {posts.map((post) => (
-                            <PostCard key={post._id} post={post} onUpdate={handlePostUpdate} />
+                            <PostCard key={post._id} post={post} onUpdate={refreshPosts} />
                         ))}
 
                         {hasMore && sortOption !== 'random' && (

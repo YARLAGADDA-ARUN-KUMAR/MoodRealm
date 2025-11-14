@@ -1,7 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import asyncHandler from 'express-async-handler';
+import Conversation from '../models/conversationModel.js';
 
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-preview-09-2025';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const buildTextContent = (text, role = 'user') => ({
@@ -9,7 +10,14 @@ const buildTextContent = (text, role = 'user') => ({
     parts: [{ text }],
 });
 
-const getTextFromResponse = (response) => response?.text?.trim();
+const getTextFromResponse = (response) => {
+    try {
+        return response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+    } catch (e) {
+        console.error('Error extracting text from response:', e);
+        return null;
+    }
+};
 
 const generateInspirationalContent = asyncHandler(async (req, res) => {
     const { mood, contentType } = req.body;
@@ -36,9 +44,7 @@ const generateInspirationalContent = asyncHandler(async (req, res) => {
         });
 
         const text = getTextFromResponse(response);
-        if (!text) {
-            throw new Error('Gemini response did not include text');
-        }
+        if (!text) throw new Error('Gemini response did not include text');
 
         res.json({ content: text });
     } catch (error) {
@@ -49,6 +55,7 @@ const generateInspirationalContent = asyncHandler(async (req, res) => {
 
 const chatWithAI = asyncHandler(async (req, res) => {
     const { history = [], newMessage } = req.body;
+    const userId = req.user._id;
 
     if (!newMessage) {
         return res.status(400).json({ message: 'New message is required' });
@@ -57,24 +64,37 @@ const chatWithAI = asyncHandler(async (req, res) => {
     const systemInstruction =
         'You are SoulBot, a compassionate and supportive AI companion. Respond with empathy, encouragement, and concise guidance.';
 
-    const sanitizedHistory = history
-        .filter((msg) => msg?.content)
-        .map((msg) => buildTextContent(msg.content, msg.role === 'assistant' ? 'model' : 'user'));
-
-    try {
-        const response = await ai.models.generateContent({
-            model: DEFAULT_GEMINI_MODEL,
-            contents: [
-                buildTextContent(systemInstruction),
-                ...sanitizedHistory,
-                buildTextContent(newMessage),
+    let conversation = await Conversation.findOne({ user: userId });
+    if (!conversation) {
+        conversation = await Conversation.create({
+            user: userId,
+            messages: [
+                { role: 'user', content: systemInstruction },
+                { role: 'model', content: 'Ok, I will be SoulBot.' },
             ],
         });
+    }
 
+    conversation.messages.push({ role: 'user', content: newMessage });
+
+    const geminiHistory = conversation.messages.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.content }],
+    }));
+
+    try {
+        const chat = await ai.models.startChat({
+            model: DEFAULT_GEMINI_MODEL,
+            history: geminiHistory.slice(0, -1),
+        });
+
+        const response = await chat.sendMessage(newMessage);
         const text = getTextFromResponse(response);
-        if (!text) {
-            throw new Error('Gemini response did not include text');
-        }
+
+        if (!text) throw new Error('Gemini response did not include text');
+
+        conversation.messages.push({ role: 'model', content: text });
+        await conversation.save();
 
         res.json({ reply: text });
     } catch (error) {
@@ -83,31 +103,38 @@ const chatWithAI = asyncHandler(async (req, res) => {
     }
 });
 
-const generateQuote = asyncHandler(async (req, res) => {
-    const { mood, category } = req.body;
+const getChatHistory = asyncHandler(async (req, res) => {
+    const conversation = await Conversation.findOne({ user: req.user._id });
 
-    if (!mood || !category) {
-        return res.status(400).json({ message: 'Mood and category are required' });
+    if (conversation) {
+        return res.json(conversation.messages.slice(2));
     }
 
-    const prompt = `Generate one short and creative ${category} quote tailored for someone feeling ${mood}. Respond with the quote only.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: DEFAULT_GEMINI_MODEL,
-            contents: [buildTextContent(prompt)],
-        });
-
-        const text = getTextFromResponse(response);
-        if (!text) {
-            throw new Error('Gemini response did not include text');
-        }
-
-        res.json({ quote: text });
-    } catch (error) {
-        console.error('Gemini quote error:', error);
-        res.status(500).json({ message: 'Failed to generate quote' });
-    }
+    res.json([
+        {
+            role: 'model',
+            content: "Hello! I'm your AI companion. How can I support you today?",
+            timestamp: new Date().toISOString(),
+        },
+    ]);
 });
 
-export { chatWithAI, generateInspirationalContent, generateQuote };
+const clearChatHistory = asyncHandler(async (req, res) => {
+    const conversation = await Conversation.findOne({ user: req.user._id });
+
+    if (conversation) {
+        conversation.messages = [
+            {
+                role: 'user',
+                content:
+                    'You are SoulBot, a compassionate and supportive AI companion. Respond with empathy, encouragement, and concise guidance.',
+            },
+            { role: 'model', content: 'Ok, I will be SoulBot.' },
+        ];
+        await conversation.save();
+    }
+
+    res.json({ message: 'Conversation cleared' });
+});
+
+export { chatWithAI, clearChatHistory, generateInspirationalContent, getChatHistory };

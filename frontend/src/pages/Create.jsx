@@ -1,9 +1,9 @@
-// D:\MoodRealm\frontend\src\pages\Create.jsx
-
 import { useAuth } from '@/contexts/AuthContext';
+import { getMoodColor } from '@/lib/utils';
 import api from '@/services/apiService';
 import { Image as ImageIcon, Loader2, Send, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const Create = () => {
@@ -38,7 +38,7 @@ const Create = () => {
 
     const handleInspire = async () => {
         if (!mood || !contentType) {
-            alert('Please select a mood and content type first');
+            toast.error('Please select a mood and content type first');
             return;
         }
 
@@ -51,7 +51,7 @@ const Create = () => {
             setContent(data.content);
         } catch (error) {
             console.error('Error generating content:', error);
-            alert('Failed to generate content. Please try again.');
+            toast.error('Failed to generate content. Please try again.');
         } finally {
             setGeneratingContent(false);
         }
@@ -76,7 +76,7 @@ const Create = () => {
             setBackgroundStyle('image');
         } catch (error) {
             console.error('Error uploading image:', error);
-            alert(error.response?.data?.message || 'Failed to upload image');
+            toast.error(error.response?.data?.message || 'Failed to upload image');
         } finally {
             setUploadingImage(false);
             if (fileInput) {
@@ -89,7 +89,7 @@ const Create = () => {
         e.preventDefault();
 
         if (!content.trim()) {
-            alert('Please write something before posting');
+            toast.error('Please write something before posting');
             return;
         }
 
@@ -104,30 +104,13 @@ const Create = () => {
             });
 
             navigate('/');
-            alert('Post created successfully!');
+            toast.success('Post created successfully!');
         } catch (error) {
             console.error('Error creating post:', error);
-            alert(error.response?.data?.message || 'Failed to create post');
+            toast.error(error.response?.data?.message || 'Failed to create post');
         } finally {
             setPosting(false);
         }
-    };
-
-    const getMoodColor = (moodName) => {
-        const colors = {
-            Inspired: 'from-blue-500 to-purple-600',
-            Joyful: 'from-yellow-400 to-orange-500',
-            Grateful: 'from-green-400 to-teal-500',
-            Romantic: 'from-pink-500 to-red-500',
-            Heartbroken: 'from-gray-500 to-blue-900',
-            Lonely: 'from-indigo-900 to-gray-800',
-            Creative: 'from-purple-500 to-pink-500',
-            Motivated: 'from-orange-500 to-red-600',
-            Anxious: 'from-gray-600 to-purple-900',
-            Funny: 'from-yellow-300 to-green-400',
-            Neutral: 'from-gray-600 to-gray-800',
-        };
-        return colors[moodName] || colors.Neutral;
     };
 
     return (

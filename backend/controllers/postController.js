@@ -41,30 +41,16 @@ const getAllPosts = asyncHandler(async (req, res) => {
     ];
 
     if (sort === 'random') {
-        const pipeline = [
-            ...matchStage,
-            { $sample: { size: limit } },
-            ...addFieldsStage,
-        ];
+        const pipeline = [...matchStage, { $sample: { size: limit } }, ...addFieldsStage];
         const randomPosts = await Post.aggregate(pipeline);
         await Post.populate(randomPosts, populateOptions);
         return res.json(randomPosts);
     }
 
-    const sortStage = [
-        { $sort: SORT_PIPELINES[sort] || SORT_PIPELINES.latest },
-    ];
-    const paginationStages = [
-        { $skip: (page - 1) * limit },
-        { $limit: limit },
-    ];
+    const sortStage = [{ $sort: SORT_PIPELINES[sort] || SORT_PIPELINES.latest }];
+    const paginationStages = [{ $skip: (page - 1) * limit }, { $limit: limit }];
 
-    const pipeline = [
-        ...matchStage,
-        ...addFieldsStage,
-        ...sortStage,
-        ...paginationStages,
-    ];
+    const pipeline = [...matchStage, ...addFieldsStage, ...sortStage, ...paginationStages];
 
     const posts = await Post.aggregate(pipeline);
     await Post.populate(posts, populateOptions);
@@ -78,17 +64,21 @@ const getUserPosts = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    const page = Number(req.query.page) || 1;
-    const limit = 10;
-
     const posts = await Post.find({ user: id })
         .populate('user', 'name email')
         .populate('comments.user', 'name')
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
+        .sort({ createdAt: -1 });
 
-    res.json(posts);
+    const totalLikes = posts.reduce((sum, post) => sum + post.likes.length, 0);
+    const totalComments = posts.reduce((sum, post) => sum + post.comments.length, 0);
+
+    const stats = {
+        totalPosts: posts.length,
+        totalLikes,
+        totalComments,
+    };
+
+    res.json({ posts, stats });
 });
 
 const createPost = asyncHandler(async (req, res) => {
