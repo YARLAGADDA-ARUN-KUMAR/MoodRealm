@@ -7,18 +7,16 @@ const AuthenticatedNav = () => {
 
     return (
         <>
-            {/* Desktop Navigation */}
             <nav className="bg-[#0a0e27] border-b border-gray-800 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <NavLink to="/" className="flex items-center space-x-2">
                             <Sparkles className="w-8 h-8 text-[#ec4899]" />
                             <span className="text-2xl font-bold text-white">
-                                <span className="text-[#ec4899]">Soul</span>Spark
+                                <span className="text-[#ec4899]">Mood</span>Realm
                             </span>
                         </NavLink>
 
-                        {/* Desktop Links: Hidden on mobile */}
                         <div className="hidden md:flex items-center space-x-1">
                             <NavLink
                                 to="/"
