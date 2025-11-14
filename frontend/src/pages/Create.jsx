@@ -18,6 +18,7 @@ const Create = () => {
 
     const [generatingContent, setGeneratingContent] = useState(false);
     const [posting, setPosting] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const moods = [
         'Inspired',
@@ -56,15 +57,31 @@ const Create = () => {
         }
     };
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setBackgroundImage(reader.result);
-                setBackgroundStyle('image');
-            };
-            reader.readAsDataURL(file);
+    const handleImageUpload = async (event) => {
+        const fileInput = event.target;
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        setUploadingImage(true);
+        try {
+            const { data } = await api.post('/upload/image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            setBackgroundImage(data.url);
+            setBackgroundStyle('image');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert(error.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+            if (fileInput) {
+                fileInput.value = '';
+            }
         }
     };
 
@@ -182,15 +199,23 @@ const Create = () => {
                         <label className="cursor-pointer">
                             <div className="border-2 border-dashed border-gray-700 rounded-lg p-2 hover:border-[#ec4899] transition text-center">
                                 <ImageIcon className="w-8 h-8 text-gray-500 mx-auto mb-1" />
-                                <span className="text-gray-400 text-sm">Upload Custom Image</span>
+                                <span className="text-gray-400 text-sm">
+                                    {uploadingImage ? 'Uploading...' : 'Upload Custom Image'}
+                                </span>
                             </div>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageUpload}
                                 className="hidden"
+                                disabled={uploadingImage}
                             />
                         </label>
+                        {backgroundImage && (
+                            <p className="text-xs text-gray-500 mt-2 break-all">
+                                Current image: {backgroundImage}
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -257,7 +282,7 @@ const Create = () => {
 
                         <button
                             type="submit"
-                            disabled={posting || !content.trim()}
+                            disabled={posting || uploadingImage || !content.trim()}
                             className="flex items-center space-x-2 px-8 py-3 bg-[#ec4899] hover:bg-[#d63384] text-white rounded-lg transition disabled:opacity-50 font-semibold"
                         >
                             {posting ? (

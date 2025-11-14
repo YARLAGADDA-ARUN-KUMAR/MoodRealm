@@ -3,18 +3,26 @@ import api from '@/services/apiService';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const sortOptions = [
+    { label: 'Latest', value: 'latest' },
+    { label: 'Most Liked', value: 'likes' },
+    { label: 'Most Commented', value: 'comments' },
+    { label: 'Shuffle', value: 'random' },
+];
+
 const Stories = () => {
     const [stories, setStories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [sortOption, setSortOption] = useState('latest');
 
-    // Fetch stories
-    const fetchStories = async (pageNum = 1) => {
+    const fetchStories = async (pageNum = 1, sortValue = sortOption) => {
         try {
             setLoading(true);
-            // Fetch posts filtered by contentType=Story
-            const { data } = await api.get(`/posts?contentType=Story&page=${pageNum}`);
+            const { data } = await api.get(
+                `/posts?contentType=Story&page=${pageNum}&sort=${sortValue}`,
+            );
 
             if (pageNum === 1) {
                 setStories(data);
@@ -22,7 +30,11 @@ const Stories = () => {
                 setStories((prev) => [...prev, ...data]);
             }
 
-            setHasMore(data.length === 10); // If we get 10 posts, there might be more
+            if (sortValue === 'random') {
+                setHasMore(false);
+            } else {
+                setHasMore(data.length === 10);
+            }
         } catch (error) {
             console.error('Error fetching stories:', error);
         } finally {
@@ -30,22 +42,30 @@ const Stories = () => {
         }
     };
 
-    // Initial load
     useEffect(() => {
-        fetchStories(1);
-    }, []);
+        fetchStories(1, sortOption);
+        setPage(1);
+    }, [sortOption]);
 
-    // Load more stories
     const loadMore = () => {
+        if (sortOption === 'random' || !hasMore || loading) return;
         const nextPage = page + 1;
         setPage(nextPage);
-        fetchStories(nextPage);
+        fetchStories(nextPage, sortOption);
     };
 
-    // Handle post update (after report/delete)
     const handlePostUpdate = () => {
-        fetchStories(1);
+        fetchStories(1, sortOption);
         setPage(1);
+    };
+
+    const handleSortChange = (event) => {
+        setSortOption(event.target.value);
+        setPage(1);
+    };
+
+    const handleShuffle = () => {
+        fetchStories(1, 'random');
     };
 
     return (
@@ -67,6 +87,33 @@ const Stories = () => {
 
             {/* Stories Container */}
             <div className="max-w-3xl mx-auto px-4 py-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <h2 className="text-white text-xl font-semibold">Sort by</h2>
+                    <div className="flex items-center gap-3">
+                        <select
+                            value={sortOption}
+                            onChange={handleSortChange}
+                            className="px-4 py-2 bg-[#1a1f3a] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#ec4899] transition"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        {sortOption === 'random' && (
+                            <button
+                                type="button"
+                                onClick={handleShuffle}
+                                className="px-4 py-2 bg-[#ec4899] hover:bg-[#d63384] text-white rounded-lg transition"
+                                disabled={loading}
+                            >
+                                Shuffle Again
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {loading && page === 1 ? (
                     <div className="flex items-center justify-center py-20">
                         <Loader2 className="w-8 h-8 text-[#ec4899] animate-spin" />
@@ -94,7 +141,7 @@ const Stories = () => {
                         ))}
 
                         {/* Load More Button */}
-                        {hasMore && (
+                        {hasMore && sortOption !== 'random' && (
                             <div className="flex justify-center mt-8">
                                 <button
                                     onClick={loadMore}

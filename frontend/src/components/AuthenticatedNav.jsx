@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { BookOpen, Home, LogOut, PlusCircle, Sparkles, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const AuthenticatedNav = () => {
     const { user, logout } = useAuth();
@@ -9,55 +9,71 @@ const AuthenticatedNav = () => {
         <nav className="bg-[#0a0e27] border-b border-gray-800 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    <Link to="/" className="flex items-center space-x-2">
+                    <NavLink to="/" className="flex items-center space-x-2">
                         <Sparkles className="w-8 h-8 text-[#ec4899]" />
                         <span className="text-2xl font-bold text-white">
                             <span className="text-[#ec4899]">Soul</span>Spark
                         </span>
-                    </Link>
+                    </NavLink>
 
                     <div className="flex items-center space-x-1">
-                        <Link
+                        <NavLink
                             to="/"
-                            className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-[#1a1f3a] transition"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-2 px-4 py-2 rounded-lg text-white transition ${
+                                    isActive ? 'bg-[#ec4899]' : 'hover:bg-[#1a1f3a]'
+                                }`
+                            }
                         >
                             <Home className="w-5 h-5" />
                             <span>Feed</span>
-                        </Link>
+                        </NavLink>
 
-                        <Link
+                        <NavLink
                             to="/stories"
-                            className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-[#1a1f3a] transition"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-2 px-4 py-2 rounded-lg text-white transition ${
+                                    isActive ? 'bg-[#ec4899]' : 'hover:bg-[#1a1f3a]'
+                                }`
+                            }
                         >
                             <BookOpen className="w-5 h-5" />
                             <span>Stories</span>
-                        </Link>
+                        </NavLink>
 
-                        <Link
+                        <NavLink
                             to="/create"
-                            className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white hover:bg-[#1a1f3a] transition"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-2 px-4 py-2 rounded-lg text-white transition ${
+                                    isActive ? 'bg-[#ec4899]' : 'hover:bg-[#1a1f3a]'
+                                }`
+                            }
                         >
                             <PlusCircle className="w-5 h-5" />
                             <span>Create</span>
-                        </Link>
+                        </NavLink>
 
-                        <Link
+                        <NavLink
                             to="/ai-companion"
-                            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-[#ec4899] hover:bg-[#d63384] text-white transition"
+                            className={({ isActive }) =>
+                                `flex items-center space-x-2 px-4 py-2 rounded-lg text-white transition ${
+                                    isActive ? 'bg-[#ec4899]' : 'hover:bg-[#1a1f3a]'
+                                }`
+                            }
                         >
                             <Sparkles className="w-5 h-5" />
                             <span>AI Companion</span>
-                        </Link>
+                        </NavLink>
                     </div>
 
                     <div className="flex items-center space-x-4">
-                        <Link
+                        <NavLink
                             to="/profile"
                             className="flex items-center space-x-2 text-gray-400 hover:text-white transition"
                         >
                             <User className="w-5 h-5" />
                             <span className="hidden md:inline">{user?.name}</span>
-                        </Link>
+                        </NavLink>
 
                         <button
                             onClick={logout}

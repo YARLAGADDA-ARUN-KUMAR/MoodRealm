@@ -1,88 +1,113 @@
 import { GoogleGenAI } from '@google/genai';
 import asyncHandler from 'express-async-handler';
 
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const buildTextContent = (text, role = 'user') => ({
+    role,
+    parts: [{ text }],
+});
+
+const getTextFromResponse = (response) => response?.text?.trim();
 
 const generateInspirationalContent = asyncHandler(async (req, res) => {
     const { mood, contentType } = req.body;
 
     if (!mood || !contentType) {
-        res.status(400);
-        throw new Error('Mood and content type are required');
+        return res.status(400).json({ message: 'Mood and content type are required' });
     }
 
-    const prompt = `
-        System: You are MoodRealm, an AI that generates emotional and inspirational content.
-        The user wants a piece of content for the following parameters:
-        Mood: ${mood}
-        Type: ${contentType}
-
-        Generate a unique, creative, and inspiring piece of content.
-        - For "Quote", "Flirty Line", or "Life Lesson", keep it to one or two sentences.
-        - For "Story" or "Poem", it can be a few paragraphs long.
-        - Your response should be ONLY the generated text. Do not include quotation marks, attributions (like "- SoulSpark"), or any other surrounding text.
-    `;
+    const prompt = [
+        'You are MoodRealm, an AI that generates emotional and inspirational content.',
+        'The response must be unique, creative, and inspiring.',
+        '- For "Quote", "Flirty Line", or "Life Lesson", reply with one or two sentences.',
+        '- For "Story" or "Poem", a few short paragraphs are acceptable.',
+        '- Respond with the generated text only. No quotation marks or attributions.',
+        '',
+        `Mood: ${mood}`,
+        `Content Type: ${contentType}`,
+    ].join('\n');
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
-            contents: prompt,
+            model: DEFAULT_GEMINI_MODEL,
+            contents: [buildTextContent(prompt)],
         });
 
-        const text = response.text;
+        const text = getTextFromResponse(response);
+        if (!text) {
+            throw new Error('Gemini response did not include text');
+        }
 
         res.json({ content: text });
     } catch (error) {
         console.error('Gemini content generation error:', error);
-        res.status(500);
-        throw new Error('Failed to generate AI content');
+        res.status(500).json({ message: 'Failed to generate AI content' });
     }
 });
 
 const chatWithAI = asyncHandler(async (req, res) => {
-    const { history, newMessage } = req.body;
+    const { history = [], newMessage } = req.body;
 
     if (!newMessage) {
-        res.status(400);
-        throw new Error('New message is required');
+        return res.status(400).json({ message: 'New message is required' });
     }
 
     const systemInstruction =
-        'You are SoulBot, a compassionate and supportive AI companion. You listen, understand, and offer gentle, supportive, and concise responses. You are a friend.';
+        'You are SoulBot, a compassionate and supportive AI companion. Respond with empathy, encouragement, and concise guidance.';
+
+    const sanitizedHistory = history
+        .filter((msg) => msg?.content)
+        .map((msg) => buildTextContent(msg.content, msg.role === 'assistant' ? 'model' : 'user'));
 
     try {
-        const conversationHistory = history || [];
-        const fullPrompt = `${systemInstruction}\n\nConversation History:\n${conversationHistory
-            .map((msg) => `${msg.role}: ${msg.content}`)
-            .join('\n')}\n\nUser: ${newMessage}\n\nAssistant:`;
-
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
-            contents: fullPrompt,
+            model: DEFAULT_GEMINI_MODEL,
+            contents: [
+                buildTextContent(systemInstruction),
+                ...sanitizedHistory,
+                buildTextContent(newMessage),
+            ],
         });
 
-        const text = response.text;
+        const text = getTextFromResponse(response);
+        if (!text) {
+            throw new Error('Gemini response did not include text');
+        }
 
         res.json({ reply: text });
     } catch (error) {
         console.error('Gemini chat error:', error);
-        res.status(500);
-        throw new Error('Failed to get AI chat response');
+        res.status(500).json({ message: 'Failed to get AI chat response' });
     }
 });
 
 const generateQuote = asyncHandler(async (req, res) => {
     const { mood, category } = req.body;
-    const prompt = `Generate a single lined unique, short, and creative ${category} quote for someone feeling ${mood}.`;
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
-        contents: prompt,
-    });
+    if (!mood || !category) {
+        return res.status(400).json({ message: 'Mood and category are required' });
+    }
 
-    const text = response.text;
+    const prompt = `Generate one short and creative ${category} quote tailored for someone feeling ${mood}. Respond with the quote only.`;
 
-    res.json({ quote: text });
+    try {
+        const response = await ai.models.generateContent({
+            model: DEFAULT_GEMINI_MODEL,
+            contents: [buildTextContent(prompt)],
+        });
+
+        const text = getTextFromResponse(response);
+        if (!text) {
+            throw new Error('Gemini response did not include text');
+        }
+
+        res.json({ quote: text });
+    } catch (error) {
+        console.error('Gemini quote error:', error);
+        res.status(500).json({ message: 'Failed to generate quote' });
+    }
 });
 
 export { chatWithAI, generateInspirationalContent, generateQuote };

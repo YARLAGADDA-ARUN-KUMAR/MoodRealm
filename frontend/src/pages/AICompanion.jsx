@@ -1,15 +1,19 @@
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/services/apiService';
 import { Loader2, Send, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const AICompanion = () => {
+    const { user } = useAuth();
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const conversationStorageKey = user?._id
+        ? `soulBotConversation_${user._id}`
+        : 'soulBotConversation';
 
-    // Auto-scroll to bottom when new messages arrive
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -18,9 +22,8 @@ const AICompanion = () => {
         scrollToBottom();
     }, [messages]);
 
-    // Load conversation from localStorage on mount
     useEffect(() => {
-        const savedConversation = localStorage.getItem('soulBotConversation');
+        const savedConversation = localStorage.getItem(conversationStorageKey);
         if (savedConversation) {
             try {
                 setMessages(JSON.parse(savedConversation));
@@ -28,7 +31,6 @@ const AICompanion = () => {
                 console.error('Error loading conversation:', error);
             }
         } else {
-            // Add welcome message if no conversation exists
             setMessages([
                 {
                     role: 'assistant',
@@ -38,18 +40,15 @@ const AICompanion = () => {
             ]);
         }
 
-        // Focus input on mount
         inputRef.current?.focus();
-    }, []);
+    }, [conversationStorageKey]);
 
-    // Save conversation to localStorage whenever it changes
     useEffect(() => {
         if (messages.length > 0) {
-            localStorage.setItem('soulBotConversation', JSON.stringify(messages));
+            localStorage.setItem(conversationStorageKey, JSON.stringify(messages));
         }
-    }, [messages]);
+    }, [messages, conversationStorageKey]);
 
-    // Send message to AI
     const handleSendMessage = async (e) => {
         e.preventDefault();
 
@@ -61,25 +60,21 @@ const AICompanion = () => {
             timestamp: new Date().toISOString(),
         };
 
-        // Add user message to chat
         setMessages((prev) => [...prev, userMessage]);
         setInput('');
         setLoading(true);
 
         try {
-            // Prepare conversation history for API
             const history = [...messages, userMessage].map((msg) => ({
                 role: msg.role,
                 content: msg.content,
             }));
 
-            // Call AI API
             const { data } = await api.post('/ai/chat', {
                 history: history,
                 newMessage: userMessage.content,
             });
 
-            // Add AI response to chat
             const aiMessage = {
                 role: 'assistant',
                 content: data.reply,
@@ -90,7 +85,6 @@ const AICompanion = () => {
         } catch (error) {
             console.error('Error sending message:', error);
 
-            // Add error message
             const errorMessage = {
                 role: 'assistant',
                 content:
@@ -106,21 +100,20 @@ const AICompanion = () => {
         }
     };
 
-    // Clear conversation
     const handleClearConversation = () => {
         if (window.confirm('Are you sure you want to clear this conversation?')) {
-            setMessages([
+            const clearedConversation = [
                 {
                     role: 'assistant',
                     content: "Hello! I'm your AI companion. How can I support you today?",
                     timestamp: new Date().toISOString(),
                 },
-            ]);
-            localStorage.removeItem('soulBotConversation');
+            ];
+            setMessages(clearedConversation);
+            localStorage.setItem(conversationStorageKey, JSON.stringify(clearedConversation));
         }
     };
 
-    // Format timestamp
     const formatTime = (timestamp) => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('en-US', {
@@ -131,8 +124,7 @@ const AICompanion = () => {
 
     return (
         <div className="min-h-screen bg-[#0a0e27] flex flex-col">
-            {/* Header */}
-            <div className="bg-linear-to-r from-purple-600 to-pink-600 py-6 sticky top-16 z-40">
+            <div className="bg-linear-to-r from-purple-600 to-pink-600 py-1 sticky top-16 z-40">
                 <div className="max-w-4xl mx-auto px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">

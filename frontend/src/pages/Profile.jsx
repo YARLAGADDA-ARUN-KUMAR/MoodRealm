@@ -92,7 +92,10 @@ const Profile = () => {
     };
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-US', {
+        if (!date) return '—';
+        const parsedDate = new Date(date);
+        if (Number.isNaN(parsedDate.getTime())) return '—';
+        return parsedDate.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',

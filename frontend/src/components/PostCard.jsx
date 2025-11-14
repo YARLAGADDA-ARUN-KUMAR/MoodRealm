@@ -99,7 +99,7 @@ const PostCard = ({ post, onUpdate }) => {
     return (
         <div className="mb-6">
             <div
-                className={`relative rounded-2xl p-8 bg-linear-to-br ${getMoodColor(
+                className={`relative rounded-2xl p-8 bg-gradient-to-br ${getMoodColor(
                     post.mood,
                 )} min-h-[300px] flex flex-col justify-between overflow-hidden`}
                 style={
@@ -164,10 +164,7 @@ const PostCard = ({ post, onUpdate }) => {
                 </div>
 
                 {user && post.user?._id !== user._id && (
-                    <button
-                        onClick={handleReport}
-                        className="text-gray-400 hover:text-red-500 transition"
-                    >
+                    <button onClick={handleReport} className="text-red-500 transition">
                         <Flag className="w-5 h-5" />
                     </button>
                 )}
